@@ -64,6 +64,11 @@ export type Database = {
           title: string
           updated_at: string
           votes: number | null
+          attachments: Array<{
+            name: string
+            url: string
+            size: number
+          }> | null
         }
         Insert: {
           author_id: string
@@ -74,6 +79,11 @@ export type Database = {
           title: string
           updated_at?: string
           votes?: number | null
+          attachments?: Array<{
+            name: string
+            url: string
+            size: number
+          }> | null
         }
         Update: {
           author_id?: string
@@ -84,6 +94,11 @@ export type Database = {
           title?: string
           updated_at?: string
           votes?: number | null
+          attachments?: Array<{
+            name: string
+            url: string
+            size: number
+          }> | null
         }
         Relationships: [
           {

@@ -1,12 +1,22 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Comments } from "@/components/Comments";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Edit, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Post {
   id: string;
@@ -14,6 +24,7 @@ interface Post {
   content: string;
   votes: number;
   created_at: string;
+  author_id: string;
   author: {
     username: string;
   };
@@ -31,8 +42,11 @@ interface Post {
 
 const PostDetails = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
   const [userVote, setUserVote] = useState<boolean | null>(null);
+  const [isAuthor, setIsAuthor] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,6 +54,98 @@ const PostDetails = () => {
     fetchPost();
     checkUserVote();
   }, [id]);
+
+  useEffect(() => {
+    if (post) {
+      checkIsAuthor();
+    }
+  }, [post]);
+
+  const checkIsAuthor = async () => {
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session?.user) return;
+      
+      setIsAuthor(session.session.user.id === post.author_id);
+      console.log('Checking author:', {
+        userId: session.session.user.id,
+        postAuthorId: post.author_id,
+        isAuthor: session.session.user.id === post.author_id
+      });
+    } catch (error) {
+      console.error('Error checking author:', error);
+    }
+  };
+
+  const handleEdit = () => {
+    navigate(`/edit-post/${id}`);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+
+    try {
+      setIsLoading(true);
+
+      // Delete comments first
+      const { error: commentsError } = await supabase
+        .from('comments')
+        .delete()
+        .eq('post_id', id);
+
+      if (commentsError) throw commentsError;
+
+      // Delete post_tags associations
+      const { error: tagsError } = await supabase
+        .from('posts_tags')
+        .delete()
+        .eq('post_id', id);
+
+      if (tagsError) throw tagsError;
+
+      // Delete attachments from storage if they exist
+      if (post?.attachments) {
+        for (const attachment of post.attachments) {
+          const fileName = attachment.url.split('/').pop();
+          if (fileName) {
+            const { error: storageError } = await supabase.storage
+              .from('post-attachments')
+              .remove([fileName]);
+            
+            if (storageError) {
+              console.error('Error deleting attachment:', storageError);
+              // Continue with deletion even if attachment removal fails
+            }
+          }
+        }
+      }
+
+      // Finally delete the post
+      const { error: postError } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', id);
+
+      if (postError) throw postError;
+
+      toast({
+        title: "Post deleted",
+        description: "Your post has been deleted successfully."
+      });
+
+      navigate('/');
+    } catch (error) {
+      console.error('Delete error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error deleting post",
+        description: error instanceof Error ? error.message : "Failed to delete post"
+      });
+    } finally {
+      setIsLoading(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   const fetchPost = async () => {
     if (!id) return;
@@ -53,6 +159,7 @@ const PostDetails = () => {
         votes,
         created_at,
         attachments,
+        author_id,
         author:profiles!posts_author_id_fkey (
           username
         ),
@@ -166,12 +273,36 @@ const PostDetails = () => {
             <div className="prose dark:prose-invert max-w-none mb-4">
               {post.content}
             </div>
-            <div className="flex flex-wrap gap-2">
-              {post.posts_tags.map((pt, index) => (
-                <Badge key={index} variant="secondary">
-                  {pt.tags.name}
-                </Badge>
-              ))}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex gap-2">
+                {post.posts_tags.map((pt, index) => (
+                  <Badge key={index} variant="secondary">
+                    {pt.tags.name}
+                  </Badge>
+                ))}
+              </div>
+              {isAuthor && (
+                <div className="ml-auto flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEdit}
+                    className="flex items-center gap-2"
+                  >
+                    <Edit className="h-4 w-4" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </div>
+              )}
             </div>
             {post.attachments && post.attachments.length > 0 && (
               <div className="mt-4 border-t pt-4">
@@ -197,6 +328,27 @@ const PostDetails = () => {
         </div>
       </div>
       <Comments postId={post.id} />
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your post
+              and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

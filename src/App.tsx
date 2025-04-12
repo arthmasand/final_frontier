@@ -13,6 +13,7 @@ import Questions from "./pages/Questions";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import PostDetails from "./pages/PostDetails";
+import EditPost from "./pages/EditPost";
 import Chat from "./pages/Chat";
 import Groups from "./pages/Groups";
 import Events from "./pages/Events";
@@ -23,7 +24,7 @@ const AppContent = () => {
   const location = useLocation();
   const isAuthPage = ['/login', '/signup'].includes(location.pathname);
   const isLandingPage = location.pathname === '/';
-  const isForumPage = ['/home', '/questions'].includes(location.pathname) || location.pathname.startsWith('/post/');
+  const isForumPage = ['/home', '/questions'].includes(location.pathname) || location.pathname.startsWith('/post/') || location.pathname.startsWith('/edit-post/');
   
   return (
     <SidebarProvider>
@@ -39,6 +40,7 @@ const AppContent = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/post/:id" element={<PostDetails />} />
+              <Route path="/edit-post/:id" element={<EditPost />} />
               <Route path="/chat" element={<Chat />} />
               <Route path="/groups" element={<Groups />} />
               <Route path="/events" element={<Events />} />

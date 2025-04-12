@@ -593,66 +593,6 @@ const Home = () => {
                 )}
               </div>
             </div>
-            <div className="space-y-4 mt-4">
-              <div className="flex items-center gap-2">
-                <Upload className="h-4 w-4 text-gray-500" />
-                <span className="text-sm text-muted-foreground">Add attachments:</span>
-              </div>
-              <div className="flex flex-col gap-4">
-                <input
-                  type="file"
-                  multiple
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  ref={fileInputRef}
-                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Upload Files
-                    </>
-                  )}
-                </Button>
-                {uploadedFiles.length > 0 && (
-                  <div className="space-y-2">
-                    {uploadedFiles.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center justify-between p-2 border rounded-lg"
-                      >
-                        <div className="flex items-center gap-2">
-                          <FileIcon className="h-4 w-4 text-blue-500" />
-                          <span className="text-sm">{file.name}</span>
-                          <span className="text-xs text-gray-500">
-                            ({Math.round(file.size / 1024)}KB)
-                          </span>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeFile(file.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
@@ -663,7 +603,7 @@ const Home = () => {
               <Button onClick={handleCreatePost}>Create Post</Button>
             </div>
           </div>
-        )}
+        )} 
 
         <section className="mb-12">
           <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-foreground">
@@ -690,7 +630,7 @@ const Home = () => {
           </div>
         </section>
 
-        <section> 
+        <section>
           <h2 className="text-2xl font-bold mb-6 text-foreground">Latest Posts</h2>
           <div className="grid gap-6">
             {latestPosts.map((post) => (
