@@ -94,15 +94,25 @@ const Questions = () => {
   };
 
   const filteredPosts = posts.filter((post) => {
-    const matchesSearch = post.title
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesTags =
+    const searchLower = searchQuery.toLowerCase();
+    
+    // Check if search query matches title
+    const matchesTitle = post.title.toLowerCase().includes(searchLower);
+    
+    // Check if search query matches any of the post's tags
+    const matchesPostTags = post.posts_tags.some(pt => 
+      pt.tags.name.toLowerCase().includes(searchLower)
+    );
+
+    // Check if post has all selected tags (from the tag filter)
+    const matchesSelectedTags =
       selectedTags.length === 0 ||
-      selectedTags.some((tag) => 
+      selectedTags.every((tag) => 
         post.posts_tags.some(pt => pt.tags.name === tag)
       );
-    return matchesSearch && matchesTags;
+
+    // Post should match either title OR tags, AND must match all selected filter tags
+    return (matchesTitle || matchesPostTags) && matchesSelectedTags;
   });
 
   return (
