@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { Comments } from "@/components/Comments";
+import { Paperclip } from "lucide-react";
 
 interface Post {
   id: string;
@@ -21,6 +22,11 @@ interface Post {
       name: string;
     };
   }[];
+  attachments: Array<{
+    name: string;
+    url: string;
+    size: number;
+  }> | null;
 }
 
 const PostDetails = () => {
@@ -41,7 +47,12 @@ const PostDetails = () => {
     const { data: post, error } = await supabase
       .from("posts")
       .select(`
-        *,
+        id,
+        title,
+        content,
+        votes,
+        created_at,
+        attachments,
         author:profiles!posts_author_id_fkey (
           username
         ),
@@ -162,6 +173,26 @@ const PostDetails = () => {
                 </Badge>
               ))}
             </div>
+            {post.attachments && post.attachments.length > 0 && (
+              <div className="mt-4 border-t pt-4">
+                <h3 className="text-sm font-semibold mb-2">Attachments</h3>
+                <div className="space-y-2">
+                  {post.attachments.map((file) => (
+                    <a
+                      key={file.name}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      <Paperclip className="h-4 w-4" />
+                      <span>{file.name}</span>
+                      <span className="text-xs text-gray-500">({Math.round(file.size / 1024)}KB)</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

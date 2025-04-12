@@ -6,9 +6,16 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabase";
-import { PlusCircle, TrendingUp, Tag, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { PlusCircle, TrendingUp, Tag, X, Upload, Loader2, FileIcon } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+
+interface FileUpload {
+  id: string;
+  name: string;
+  url: string;
+  size: number;
+}
 
 interface Post {
   id: string;
@@ -28,6 +35,11 @@ interface Post {
   comments: {
     count: number;
   }[];
+  attachments?: {
+    name: string;
+    url: string;
+    size: number;
+  }[];
 }
 
 interface Tag {
@@ -44,6 +56,9 @@ const Home = () => {
     content: "",
     tags: [] as string[],
   });
+  const [uploadedFiles, setUploadedFiles] = useState<FileUpload[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [newTagInput, setNewTagInput] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -155,6 +170,138 @@ const Home = () => {
     return content;
   };
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (!session?.session?.user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please sign in to upload files",
+      });
+      navigate("/login");  
+      return;
+    }
+
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    setIsUploading(true);
+    try {
+      const newFiles: FileUpload[] = [];
+
+      for (const file of files) {
+        // Generate unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+
+        console.log('Attempting to upload:', {
+          fileName,
+          fileSize: file.size,
+          fileType: file.type
+        });
+
+        // Simple upload attempt
+        const { data, error: uploadError } = await supabase.storage
+          .from('post-attachments')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error('Upload error:', uploadError);
+          throw uploadError;
+        }
+
+        // Get the public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('post-attachments')
+          .getPublicUrl(fileName);
+
+        newFiles.push({
+          id: fileName,
+          name: file.name,
+          url: publicUrl,
+          size: file.size
+        });
+      }
+
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      toast({
+        title: "Files uploaded",
+        description: `Successfully uploaded ${newFiles.length} file(s)`
+      });
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      let errorMessage = "Failed to upload file";
+      
+      if (error instanceof Error) {
+        // Handle specific Supabase storage errors
+        if (error.message.includes('duplicate')) {
+          errorMessage = "A file with this name already exists";
+        } else if (error.message.includes('permission')) {
+          errorMessage = "You don't have permission to upload files. Please check storage policies.";
+        } else if (error.message.includes('bucket')) {
+          errorMessage = "Storage setup issue. Please check if the bucket exists.";
+        } else if (error.message.includes('row level security')) {
+          errorMessage = "Storage permissions need to be configured. Please contact the administrator.";
+        } else if (error.message.includes('not authorized')) {
+          errorMessage = "You need to be logged in to upload files.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Upload failed",
+        description: errorMessage
+      });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    }
+  };
+
+  const removeFile = async (fileId: string) => {
+    const { data: session } = await supabase.auth.getSession();
+    
+    if (!session?.session?.user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication required",
+        description: "Please sign in to remove files",
+      });
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const file = uploadedFiles.find(f => f.id === fileId);
+      if (!file) return;
+
+      const filePath = `${session.session.user.id}/${fileId}`;
+      const { error } = await supabase.storage
+        .from('post-attachments')
+        .remove([filePath]);
+
+      if (error) throw error;
+
+      setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+      toast({
+        title: "File removed",
+        description: `Removed ${file.name}`
+      });
+    } catch (error) {
+      console.error('Error removing file:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to remove file"
+      });
+    }
+  };
+
   const handleCreatePost = async () => {
     const { data: session } = await supabase.auth.getSession();
     
@@ -168,6 +315,15 @@ const Home = () => {
       return;
     }
 
+    if (isUploading) {
+      toast({
+        variant: "destructive",
+        title: "Please wait",
+        description: "Files are still uploading",
+      });
+      return;
+    }
+
     const preview = generatePreview(newPost.content);
 
     const { data: post, error: postError } = await supabase.from("posts").insert({
@@ -175,6 +331,11 @@ const Home = () => {
       content: newPost.content,
       preview: preview,
       author_id: session.session.user.id,
+      attachments: uploadedFiles.length > 0 ? uploadedFiles.map(file => ({
+        name: file.name,
+        url: file.url,
+        size: file.size
+      })) : null
     }).select().single();
 
     if (postError) {
@@ -372,6 +533,126 @@ const Home = () => {
                 ))}
               </div>
             </div>
+            <div className="space-y-4 mt-4">
+              <div className="flex items-center gap-2">
+                <Upload className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-muted-foreground">Add attachments:</span>
+              </div>
+              <div className="flex flex-col gap-4">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  ref={fileInputRef}
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Files
+                    </>
+                  )}
+                </Button>
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    {uploadedFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center justify-between p-2 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileIcon className="h-4 w-4 text-blue-500" />
+                          <span className="text-sm">{file.name}</span>
+                          <span className="text-xs text-gray-500">
+                            ({Math.round(file.size / 1024)}KB)
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(file.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="space-y-4 mt-4">
+              <div className="flex items-center gap-2">
+                <Upload className="h-4 w-4 text-gray-500" />
+                <span className="text-sm text-muted-foreground">Add attachments:</span>
+              </div>
+              <div className="flex flex-col gap-4">
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  ref={fileInputRef}
+                  accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.gif"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="mr-2 h-4 w-4" />
+                      Upload Files
+                    </>
+                  )}
+                </Button>
+                {uploadedFiles.length > 0 && (
+                  <div className="space-y-2">
+                    {uploadedFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center justify-between p-2 border rounded-lg"
+                      >
+                        <div className="flex items-center gap-2">
+                          <FileIcon className="h-4 w-4 text-blue-500" />
+                          <span className="text-sm">{file.name}</span>
+                          <span className="text-xs text-gray-500">
+                            ({Math.round(file.size / 1024)}KB)
+                          </span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(file.id)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
             <div className="flex justify-end gap-2">
               <Button
                 variant="outline"
@@ -403,12 +684,13 @@ const Home = () => {
                 timestamp={new Date(post.created_at).toLocaleDateString()}
                 trending={true}
                 tags={post.posts_tags.map((pt) => pt.tags.name)}
+                attachments={post.attachments}
               />
             ))}
           </div>
         </section>
 
-        <section>
+        <section> 
           <h2 className="text-2xl font-bold mb-6 text-foreground">Latest Posts</h2>
           <div className="grid gap-6">
             {latestPosts.map((post) => (
@@ -423,6 +705,7 @@ const Home = () => {
                 role="student"
                 timestamp={new Date(post.created_at).toLocaleDateString()}
                 tags={post.posts_tags.map((pt) => pt.tags.name)}
+                attachments={post.attachments}
               />
             ))}
           </div>

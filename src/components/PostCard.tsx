@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { TrendingUp, MessageSquare } from "lucide-react";
+import { TrendingUp, MessageSquare, Paperclip } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export interface PostCardProps {
@@ -14,6 +14,11 @@ export interface PostCardProps {
   timestamp: string;
   trending?: boolean;
   tags?: readonly string[] | string[];
+  attachments?: Array<{
+    name: string;
+    url: string;
+    size: number;
+  }>;
 }
 
 export const PostCard = ({
@@ -27,6 +32,7 @@ export const PostCard = ({
   timestamp,
   trending,
   tags,
+  attachments,
 }: PostCardProps) => {
   const navigate = useNavigate();
   const roleColors = {
@@ -70,15 +76,35 @@ export const PostCard = ({
           <span className="text-sm font-medium">{author}</span>
         </div>
       </div>
-      {tags && tags.length > 0 && (
-        <div className="flex gap-2 mt-4">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-      )}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {tags && tags.length > 0 && (
+          <div className="flex gap-2">
+            {tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        {attachments && attachments.length > 0 && (
+          <div className="flex gap-2 ml-auto">
+            {attachments.map((file) => (
+              <a
+                key={file.name}
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+              >
+                <Paperclip className="h-4 w-4" />
+                <span>{file.name}</span>
+                <span className="text-xs text-gray-500">({Math.round(file.size / 1024)}KB)</span>
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
     </Card>
   );
 };
