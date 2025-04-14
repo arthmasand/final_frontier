@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut, Moon, Sun, Edit } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -144,20 +144,12 @@ export const AppBar = () => {
             )}
           </Button>
           {!user ? (
-            <>
-              <Button
-                variant="ghost"
-                onClick={() => navigate('/login')}
-              >
-                Sign In
-              </Button>
-              <Button
-                variant="default"
-                onClick={() => navigate('/signup')}
-              >
-                Sign Up
-              </Button>
-            </>
+            <Button
+              variant="default"
+              onClick={() => navigate('/login')}
+            >
+              Sign In with Magic Link
+            </Button>
           ) : (
             <>
               <div className="flex items-center gap-2">

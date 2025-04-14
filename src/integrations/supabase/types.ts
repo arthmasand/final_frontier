@@ -148,6 +148,7 @@ export type Database = {
           id: string
           nickname: string | null
           nickname_changed: boolean | null
+          role: 'student' | 'teacher'
           updated_at: string
           username: string | null
         }
@@ -187,6 +188,48 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      moderator_assignments: {
+        Row: {
+          id: string
+          student_id: string
+          assigned_by: string
+          time_slot: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          assigned_by: string
+          time_slot: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          assigned_by?: string
+          time_slot?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moderator_assignments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moderator_assignments_assigned_by_fkey"
+            columns: ["assigned_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       user_votes: {
         Row: {

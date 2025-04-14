@@ -25,8 +25,9 @@ interface Post {
   votes: number;
   created_at: string;
   author_id: string;
-  author: {
+  profiles?: {
     username: string;
+    role?: 'student' | 'teacher' | 'admin';
   };
   posts_tags: {
     tags: {
@@ -44,7 +45,7 @@ const PostDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [post, setPost] = useState<Post | null>(null);
-  const [userVote, setUserVote] = useState<boolean | null>(null);
+  const [userVote, setUserVote] = useState<boolean>(false);
   const [isAuthor, setIsAuthor] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { toast } = useToast();
@@ -52,7 +53,6 @@ const PostDetails = () => {
 
   useEffect(() => {
     fetchPost();
-    checkUserVote();
   }, [id]);
 
   useEffect(() => {
@@ -150,38 +150,44 @@ const PostDetails = () => {
   const fetchPost = async () => {
     if (!id) return;
 
-    const { data: post, error } = await supabase
-      .from("posts")
-      .select(`
-        id,
-        title,
-        content,
-        votes,
-        created_at,
-        attachments,
-        author_id,
-        author:profiles!posts_author_id_fkey (
-          username
-        ),
-        posts_tags (
-          tags (
-            name
-          )
-        )
-      `)
-      .eq("id", id)
-      .single();
+    try {
+      const { data: post, error } = await supabase
+        .from("posts")
+        .select(`
+          id,
+          title,
+          content,
+          votes,
+          created_at,
+          author_id,
+          profiles:profiles!posts_author_id_fkey (username, role),
+          posts_tags (tags (name)),
+          attachments
+        `)
+        .eq('id', id)
+        .single();
 
-    if (error) {
+      if (error) {
+        console.error('Error fetching post:', error);
+        toast({
+          variant: "destructive",
+          title: "Error fetching post",
+          description: error.message,
+        });
+        return;
+      }
+
+      if (post) {
+        setPost(post);
+      }
+    } catch (error) {
+      console.error('Error in fetchPost:', error);
       toast({
         variant: "destructive",
         title: "Error fetching post",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to fetch post",
       });
-      return;
     }
-
-    setPost(post);
   };
 
   const checkUserVote = async () => {
@@ -266,7 +272,7 @@ const PostDetails = () => {
           <div className="flex-1">
             <h1 className="text-2xl font-bold mb-4">{post.title}</h1>
             <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-              <span>Posted by {post.author.username}</span>
+              <span>Posted by {post.profiles?.username || 'Unknown User'}</span>
               <span>•</span>
               <span>{format(new Date(post.created_at), "PPp")}</span>
             </div>

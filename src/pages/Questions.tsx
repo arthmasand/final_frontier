@@ -10,9 +10,11 @@ interface Post {
   id: string;
   title: string;
   preview: string;
+  content: string;
   votes: number;
   created_at: string;
-  profiles: {
+  author_id: string;
+  profiles?: {
     username: string;
   };
   posts_tags: {
@@ -39,15 +41,15 @@ const Questions = () => {
       const { data, error } = await supabase
         .from("posts")
         .select(`
-          *,
-          profiles!posts_author_id_fkey (
-            username
-          ),
-          posts_tags (
-            tags (
-              name
-            )
-          )
+          id,
+          title,
+          preview,
+          content,
+          votes,
+          created_at,
+          author_id,
+          profiles:profiles!posts_author_id_fkey (username),
+          posts_tags!inner (tags!inner (name))
         `)
         .order('created_at', { ascending: false });
 
@@ -55,7 +57,28 @@ const Questions = () => {
         throw error;
       }
 
-      setPosts(data || []);
+      if (data) {
+        const formattedPosts = data.map((post: any) => ({
+          id: post.id,
+          title: post.title,
+          preview: post.preview,
+          content: post.content,
+          votes: post.votes,
+          created_at: post.created_at,
+          author_id: post.author_id,
+          profiles: post.profiles ? {
+            username: post.profiles.username
+          } : undefined,
+          posts_tags: post.posts_tags.map((pt: any) => ({
+            tags: {
+              name: pt.tags.name
+            }
+          }))
+        })) as Post[];
+        setPosts(formattedPosts);
+      } else {
+        setPosts([]);
+      }
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast({
@@ -150,7 +173,7 @@ const Questions = () => {
             preview={post.preview}
             votes={post.votes}
             answers={post.posts_tags?.length || 0}
-            author={post.profiles.username}
+            author={post.profiles?.username || 'Unknown User'}
             role="student"
             timestamp={new Date(post.created_at).toLocaleDateString()}
             tags={post.posts_tags.map((pt) => pt.tags.name)}

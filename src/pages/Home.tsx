@@ -17,17 +17,21 @@ interface FileUpload {
   size: number;
 }
 
+type UserRole = 'student' | 'teacher' | 'admin';
+
 interface Post {
   id: string;
   title: string;
   content: string;  
   preview: string;
   votes: number;
-  created_at: string;
-  profiles: {
-    username: string;
+  created_at: string;   
+  author_id: string;
+  profiles?: {
+    username: string;    
+    role?: UserRole;
   };
-  posts_tags: {
+  posts_tags: { 
     tags: {
       name: string;  
     };
@@ -49,6 +53,8 @@ interface Tag {
 
 const Home = () => {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
+  const [latestPosts, setLatestPosts] = useState<Post[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);  
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPost, setNewPost] = useState({
@@ -134,32 +140,69 @@ const Home = () => {
   };
 
   const fetchPosts = async () => {
-    const { data: posts, error } = await supabase
-      .from("posts")
-      .select(`
-        *,
-        profiles!posts_author_id_fkey (
-          username
-        ),
-        posts_tags (
-          tags (
-            name
-          )
-        ),
-        comments (count)
-      `)
-      .order("votes", { ascending: false });
+    try {
+      console.log('Fetching posts...');
+      // Get current user's session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        throw sessionError;
+      }
+      
+      if (!session) {
+        console.log('No session found, redirecting to login');
+        navigate('/login');
+        return;
+      }
 
-    if (error) {
+      console.log('Session found:', session);
+
+      // Fetch posts with all related data
+      const { data: posts, error: postsError } = await supabase
+        .from("posts")
+        .select(`
+          *,
+          profiles!posts_author_id_fkey (
+            username,
+            role
+          ),
+          posts_tags (
+            tags (
+              name
+            )
+          ),
+          comments (count)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (postsError) {
+        console.error('Error fetching posts:', postsError);
+        throw postsError;
+      }
+
+      console.log('Posts fetched:', posts);
+
+      // Split posts into trending and latest
+      const sortedPosts = posts || [];
+      console.log('Total posts:', sortedPosts.length);
+
+      const trending = [...sortedPosts].sort((a, b) => b.votes - a.votes).slice(0, 5);
+      const latest = sortedPosts.slice(0, 10);
+
+      console.log('Trending posts:', trending.length);
+      console.log('Latest posts:', latest.length);
+
+      setPosts(sortedPosts);
+      setTrendingPosts(trending);
+      setLatestPosts(latest);
+    } catch (error) {
+      console.error('Error in fetchPosts:', error);
       toast({
         variant: "destructive",
         title: "Error fetching posts",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to fetch posts",
       });
-      return;
     }
-
-    setPosts(posts);
   };
 
   const generatePreview = (content: string) => {
@@ -383,8 +426,7 @@ const Home = () => {
     fetchPosts();
   };
 
-  const trendingPosts = posts.slice(0, 2);
-  const latestPosts = posts.slice(2);
+  // Posts are already split into trending and latest via state
 
   return (
     <div className="min-h-screen bg-background">
@@ -619,32 +661,32 @@ const Home = () => {
                 preview={post.preview}
                 votes={post.votes}
                 answers={post.comments?.[0]?.count || 0}
-                author={post.profiles.username}
-                role="student"
+                author={post.profiles?.username || 'Unknown User'}
+                role={(post.profiles?.role as UserRole) || 'student'}
                 timestamp={new Date(post.created_at).toLocaleDateString()}
                 trending={true}
-                tags={post.posts_tags.map((pt) => pt.tags.name)}
+                tags={post.posts_tags?.map((pt) => pt.tags.name) || []}
                 attachments={post.attachments}
               />
             ))}
           </div>
         </section>
 
-        <section>
+        <section>  
           <h2 className="text-2xl font-bold mb-6 text-foreground">Latest Posts</h2>
           <div className="grid gap-6">
-            {latestPosts.map((post) => (
+            {latestPosts.map((post) => (     
               <PostCard
-                key={post.id}
+                key={post.id}   
                 id={post.id}
                 title={post.title}
                 preview={post.preview}
                 votes={post.votes}
                 answers={post.comments?.[0]?.count || 0}
-                author={post.profiles.username}
-                role="student"
+                author={post.profiles?.username || 'Unknown User'}
+                role={(post.profiles?.role as UserRole) || 'student'}
                 timestamp={new Date(post.created_at).toLocaleDateString()}
-                tags={post.posts_tags.map((pt) => pt.tags.name)}
+                tags={post.posts_tags?.map((pt) => pt.tags.name) || []}
                 attachments={post.attachments}
               />
             ))}

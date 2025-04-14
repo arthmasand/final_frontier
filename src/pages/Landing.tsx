@@ -215,10 +215,10 @@ const Landing = () => {
                 </p>
                 <Button
                   size="lg"
-                  onClick={() => navigate("/signup")}
+                  onClick={() => navigate("/login")}
                   className="mt-8 bg-white text-gray-900 hover:bg-gray-100"
                 >
-                  Get Started
+                  Sign In with Magic Link
                 </Button>
                 <p className="text-sm text-gray-300 mt-4">
                   By signing up, you agree to our Terms of Service
