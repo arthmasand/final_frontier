@@ -168,10 +168,13 @@ export default function TeacherDashboard() {
                   <Dialog>
                     <DialogTrigger asChild>
                       <Button
-                        variant="outline"
+                        variant={student.moderator_assignments && student.moderator_assignments.length > 0 ? "secondary" : "outline"}
                         onClick={() => setSelectedStudent(student)}
+                        disabled={student.moderator_assignments && student.moderator_assignments.length > 0}
                       >
-                        Assign as Moderator
+                        {student.moderator_assignments && student.moderator_assignments.length > 0 
+                          ? "Assigned" 
+                          : "Assign as Moderator"}
                       </Button>
                     </DialogTrigger>
                     <DialogContent>

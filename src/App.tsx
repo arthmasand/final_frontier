@@ -20,6 +20,7 @@ import Groups from "./pages/Groups";
 import Events from "./pages/Events";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
+import SemesterView from "./pages/SemesterView";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -71,7 +72,7 @@ const AppContent = () => {
   const location = useLocation();
   const isAuthPage = location.pathname === '/login';
   const isLandingPage = location.pathname === '/';
-  const isForumPage = ['/home', '/questions'].includes(location.pathname) || location.pathname.startsWith('/post/') || location.pathname.startsWith('/edit-post/');
+  const isForumPage = ['/home', '/questions', '/student', '/semester-view'].includes(location.pathname) || location.pathname.startsWith('/post/') || location.pathname.startsWith('/edit-post/');
   
   return (
     <SidebarProvider>
@@ -153,6 +154,14 @@ const AppContent = () => {
                   element={
                     <ProtectedRoute requiredRole="student">
                       <StudentDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/semester-view"
+                  element={
+                    <ProtectedRoute requiredRole="student">
+                      <SemesterView />
                     </ProtectedRoute>
                   }
                 />

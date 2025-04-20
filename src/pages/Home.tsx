@@ -2,22 +2,22 @@ import { PostCard } from "@/components/PostCard";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { PlusCircle, TrendingUp, Tag, X, Upload, Loader2, FileIcon, BookOpen } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { PlusCircle, TrendingUp, Tag, X, Upload, Loader2, FileIcon } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-interface FileUpload {
+interface FileUpload { 
   id: string;
   name: string;
   url: string;
-  size: number;
+  size: number; 
 }
 
-type UserRole = 'student' | 'teacher' | 'admin';
+type UserRole = 'student' | 'teacher' | 'admin'; 
 
 interface Post {
   id: string;
@@ -33,7 +33,7 @@ interface Post {
   };
   posts_tags: { 
     tags: {
-      name: string;  
+      name: string;     
     };
   }[];
   comments: {
@@ -56,6 +56,7 @@ const Home = () => {
   const [trendingPosts, setTrendingPosts] = useState<Post[]>([]);
   const [latestPosts, setLatestPosts] = useState<Post[]>([]);
   const [availableTags, setAvailableTags] = useState<Tag[]>([]);  
+  const location = useLocation();
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPost, setNewPost] = useState({
     title: "",
@@ -72,9 +73,16 @@ const Home = () => {
   useEffect(() => {
     fetchPosts();
     initializeTags().then(() => fetchTags());
-  }, []);
+    
+    // Check if create=true is in the URL query parameters
+    const searchParams = new URLSearchParams(location.search);
+    if (searchParams.get('create') === 'true') {
+      setShowCreateForm(true);
+    }
+  }, [location]);
 
-  const initializeTags = async () => {
+  const initializeTags = async () => { 
+    // General tags
     const defaultTags = [
       'Academic',
       'Events', 
@@ -87,6 +95,31 @@ const Home = () => {
       'Student Activities',
       'Faculty'
     ];
+    
+    // Semester tags
+    const semesterTags = [
+      'Semester 1',
+      'Semester 2',
+      'Semester 3',
+      'Semester 4',
+      'Semester 5',
+      'Semester 6',
+      'Semester 7',
+      'Semester 8',
+      'Miscellaneous'
+    ];
+    
+    // Course tags
+    const courseTags = [
+      'CSE',
+      'IT',
+      'BIOTECH',
+      'ECE',
+      'BBA'
+    ];
+    
+    // Combine all tags
+    const allTags = [...defaultTags, ...semesterTags, ...courseTags];
 
     try {
       // First check if we have any tags
@@ -100,15 +133,26 @@ const Home = () => {
       if (!existingTags || existingTags.length === 0) {
         const { error: insertError } = await supabase
           .from('tags')
-          .insert(defaultTags.map(name => ({ name })));
+          .insert(allTags.map(name => ({ name })));
 
         if (insertError) throw insertError;
-
-        toast({
-          title: "Tags initialized",
-          description: "Default tags have been created."
-        });
+      } else {
+        // Check if we need to add any missing tags
+        const existingTagNames = existingTags.map(tag => tag.name);
+        const missingTags = allTags.filter(tag => !existingTagNames.includes(tag));
+        
+        if (missingTags.length > 0) {
+          const { error: insertError } = await supabase
+            .from('tags')
+            .insert(missingTags.map(name => ({ name })));
+          
+          if (insertError) throw insertError;
+        }
       }
+      toast({
+        title: "Tags initialized",
+        description: "Default tags have been created."
+      });
     } catch (error) {
       console.error('Error initializing tags:', error);
       toast({
@@ -431,15 +475,16 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-background">
       <main className="container py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground">Campus Discussions</h1>
-          <Button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-2"
-          >
-            <PlusCircle className="h-5 w-5" />
-            Create Post
-          </Button>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Campus Dialogue Hub</h1>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate('/semester-view')}>
+              <BookOpen className="mr-2 h-4 w-4" /> View by Semester
+            </Button>
+            <Button onClick={() => setShowCreateForm(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Post
+            </Button>
+          </div>
         </div>
 
         {showCreateForm && (

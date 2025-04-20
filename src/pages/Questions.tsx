@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { PostCard } from "@/components/PostCard";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Tag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, Tag, PlusCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface Post {
   id: string;
@@ -30,6 +32,7 @@ const Questions = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPosts();
@@ -140,6 +143,16 @@ const Questions = () => {
 
   return (
     <div className="container py-8">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Questions</h1>
+        <Button 
+          onClick={() => navigate('/home?create=true')} 
+          className="flex items-center gap-2"
+        >
+          <PlusCircle className="h-4 w-4" />
+          Ask a Question
+        </Button>
+      </div>
       <div className="mb-8 space-y-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500" />

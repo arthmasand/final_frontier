@@ -7,10 +7,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "@/components/ui/use-toast";
 
 export default function Auth() {
-  const { signIn, signUp } = useAuth();
+  const { signInWithEmail } = useAuth();
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [role, setRole] = useState<"student" | "teacher">("student");
   const [loading, setLoading] = useState(false);
 
@@ -19,11 +18,12 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      if (isSignUp) {
-        await signUp(email, password, role);
-      } else {
-        await signIn(email, password);
-      }
+      // We use signInWithEmail for both sign up and sign in with magic link
+      await signInWithEmail(email, role);
+      toast({
+        title: "Check your email",
+        description: "We've sent you a magic link to sign in.",
+      });
     } catch (error) {
       console.error("Auth error:", error);
       toast({
@@ -60,18 +60,7 @@ export default function Auth() {
               />
             </div>
 
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-              />
-            </div>
+
 
             {isSignUp && (
               <div className="space-y-2">
@@ -99,7 +88,7 @@ export default function Auth() {
                 ? "Loading..."
                 : isSignUp
                 ? "Create Account"
-                : "Sign In"}
+                : "Send Magic Link"}
             </Button>
           </div>
 

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
@@ -25,7 +25,7 @@ interface Post {
   votes: number;
   created_at: string;
   author_id: string;
-  profiles?: {
+  profiles: {
     username: string;
     role?: 'student' | 'teacher' | 'admin';
   };
@@ -151,6 +151,9 @@ const PostDetails = () => {
     if (!id) return;
 
     try {
+      // First, let's log the post ID we're trying to fetch
+      console.log('Fetching post with ID:', id);
+      
       const { data: post, error } = await supabase
         .from("posts")
         .select(`
@@ -164,28 +167,27 @@ const PostDetails = () => {
           posts_tags (tags (name)),
           attachments
         `)
-        .eq('id', id)
+        .eq("id", id)
         .single();
 
       if (error) {
-        console.error('Error fetching post:', error);
-        toast({
-          variant: "destructive",
-          title: "Error fetching post",
-          description: error.message,
-        });
-        return;
+        console.error('Supabase error:', error);
+        throw error;
       }
 
       if (post) {
-        setPost(post);
+        console.log('Post data loaded successfully:', post);
+        setPost(post as unknown as Post);
+        checkUserVote();
+      } else {
+        console.error('No post found with ID:', id);
       }
     } catch (error) {
-      console.error('Error in fetchPost:', error);
+      console.error("Error fetching post:", error);
       toast({
         variant: "destructive",
-        title: "Error fetching post",
-        description: error instanceof Error ? error.message : "Failed to fetch post",
+        title: "Error",
+        description: "Failed to load post details",
       });
     }
   };
