@@ -312,12 +312,12 @@ const Landing = () => {
         {/* Hero Section */}
         <section 
           ref={heroRef} 
-          className="relative mb-24 py-20 rounded-3xl overflow-hidden bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70"
+          className="relative mb-24 py-20 rounded-3xl overflow-hidden bg-gradient-to-br from-blue-900 via-indigo-800 to-violet-900"
         >
           <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1523050854058-8df90110c9f1')] opacity-10 bg-cover bg-center mix-blend-overlay"></div>
-          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-primary/30 to-transparent"></div>
-          <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
-          <div className="absolute -top-16 -right-16 w-64 h-64 bg-primary/20 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-blue-900/30 to-transparent"></div>
+          <div className="absolute -bottom-16 -left-16 w-64 h-64 bg-indigo-500/20 rounded-full blur-3xl"></div>
+          <div className="absolute -top-16 -right-16 w-64 h-64 bg-violet-500/20 rounded-full blur-3xl"></div>
           
           <div className="relative z-10 flex flex-col items-center justify-center text-center text-white p-4 max-w-5xl mx-auto">
             {user ? (
@@ -346,10 +346,14 @@ const Landing = () => {
                 <Badge variant="outline" className="mb-4 py-1 px-4 text-white border-white/30 backdrop-blur-sm">
                   Campus Dialogue Hub
                 </Badge>
-                <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                  Connect. Learn. Collaborate.
+                <h1 className="mb-8">
+                  <div className="text-4xl md:text-6xl font-bold leading-tight flex flex-col md:flex-row md:items-center md:justify-center gap-2 md:gap-4">
+                    <span className="bg-gradient-to-r from-cyan-300 to-blue-300 text-transparent bg-clip-text drop-shadow-sm">Connect.</span>
+                    <span className="bg-gradient-to-r from-blue-300 to-indigo-300 text-transparent bg-clip-text drop-shadow-sm">Learn.</span>
+                    <span className="bg-gradient-to-r from-indigo-300 to-purple-300 text-transparent bg-clip-text drop-shadow-sm">Collaborate.</span>
+                  </div>
                 </h1>
-                <p className="text-xl text-white/80 max-w-2xl mx-auto">
+                <p className="text-xl text-blue-100 max-w-2xl mx-auto">
                   The ultimate academic discussion platform designed for students and faculty
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
@@ -363,11 +367,11 @@ const Landing = () => {
                   <Button
                     size="lg"
                     variant="outline"
-                    onClick={() => {
-                      const faqSection = document.getElementById('faq-section');
-                      if (faqSection) faqSection.scrollIntoView({ behavior: 'smooth' });
+onClick={() => {
+                      const featuresSection = document.getElementById('features-section');
+                      if (featuresSection) featuresSection.scrollIntoView({ behavior: 'smooth' });
                     }}
-                    className="border-white/30 text-white hover:bg-white/10"
+                    className="border-blue-300/30 text-blue-100 hover:bg-blue-800/30"
                   >
                     Learn More
                   </Button>
@@ -390,7 +394,7 @@ const Landing = () => {
         </section>
 
         {/* Features Section */}
-        <section className="mb-24">
+        <section id="features-section" className="mb-24">
           <div className="text-center mb-16">
             <Badge variant="outline" className="mb-4">
               Features
@@ -545,29 +549,7 @@ const Landing = () => {
           </div>
         </section>
 
-        {/* FAQ Section */}
-        <section id="faq-section" className="mb-24">
-          <div className="text-center mb-16">
-            <Badge variant="outline" className="mb-4">
-              FAQ
-            </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Frequently Asked Questions</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Find answers to common questions about Campus Dialogue Hub
-            </p>
-          </div>
-          
-          <div className="max-w-3xl mx-auto bg-card p-8 rounded-xl shadow-sm border border-border/50">
-            <Accordion type="single" collapsible className="w-full">
-              {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`} className="animate-on-scroll">
-                  <AccordionTrigger className="text-left font-medium">{faq.question}</AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground">{faq.answer}</AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </div>
-        </section>
+
 
         {/* Contact Section */}
         <section className="mb-24">
@@ -610,7 +592,7 @@ const Landing = () => {
         </section>
         {/* CTA Section */}
         <section className="mb-12">
-          <div className="bg-gradient-to-r from-primary/90 to-primary/70 rounded-3xl p-12 text-center text-white relative overflow-hidden">
+          <div className="bg-gradient-to-r from-blue-900 to-indigo-900 rounded-3xl p-12 text-center text-white relative overflow-hidden">
             <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1522071820081-009f0129c71c')] opacity-10 bg-cover bg-center mix-blend-overlay"></div>
             <div className="relative z-10 max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Get Started?</h2>
@@ -620,7 +602,7 @@ const Landing = () => {
               <Button 
                 size="lg" 
                 onClick={() => navigate('/login')} 
-                className="bg-white text-primary hover:bg-gray-100 font-medium"
+                className="bg-blue-100 text-blue-900 hover:bg-blue-50 font-medium"
               >
                 Sign Up Now
               </Button>

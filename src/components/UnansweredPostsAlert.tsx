@@ -42,7 +42,7 @@ export function UnansweredPostsAlert() {
       const twoHoursAgo = new Date();
       twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
       
-      const { data, error } = await supabase
+      const { data, error } = await supabase 
         .from('posts')
         .select(`
           id,
