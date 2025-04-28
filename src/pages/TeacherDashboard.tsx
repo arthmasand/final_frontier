@@ -3,6 +3,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { UnansweredPostsAlert } from "@/components/UnansweredPostsAlert";
+import { BookOpen, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -142,7 +144,22 @@ export default function TeacherDashboard() {
 
   return (
     <div className="container py-8">
-      <h1 className="text-4xl font-bold mb-8">Teacher Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold">Teacher Dashboard</h1>
+        <div className="flex gap-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/semester-view')}
+            className="flex items-center gap-2"
+          >
+            <BookOpen className="h-4 w-4" />
+            View All Posts
+          </Button>
+        </div>
+      </div>
+      
+      {/* Alert for unanswered posts */}
+      <UnansweredPostsAlert />
       
       <div className="bg-card rounded-lg p-6">
         <h2 className="text-2xl font-semibold mb-6">Manage Moderators</h2>

@@ -1,12 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { LogOut, Moon, Sun, Edit } from "lucide-react";
+import { LogOut, Moon, Sun, Edit, BookOpen, Users } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Dialog,
   DialogContent,
@@ -19,12 +20,13 @@ import { Label } from "@/components/ui/label";
 
 export const AppBar = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
-  const [profile, setProfile] = useState<{ username?: string; nickname?: string; nickname_changed?: boolean } | null>(null);
+  const [profile, setProfile] = useState<{ username?: string; nickname?: string; nickname_changed?: boolean; role?: string } | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [newNickname, setNewNickname] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
@@ -55,7 +57,7 @@ export const AppBar = () => {
   const fetchProfile = async (userId: string) => {
     const { data, error } = await supabase
       .from('profiles')
-      .select('username, nickname, nickname_changed')
+      .select('username, nickname, nickname_changed, role')
       .eq('id', userId)
       .single();
 
@@ -129,6 +131,29 @@ export const AppBar = () => {
           >
             CollegeStack
           </h1>
+          
+          {/* Navigation links */}
+          <div className="hidden md:flex ml-8 gap-4">
+            <Button 
+              variant="ghost" 
+              className="flex items-center gap-2"
+              onClick={() => navigate('/semester-view')}
+            >
+              <BookOpen className="h-4 w-4" />
+              Browse Posts
+            </Button>
+            
+            {profile?.role === 'teacher' && (
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2"
+                onClick={() => navigate('/teacher')}
+              >
+                <Users className="h-4 w-4" />
+                Teacher Dashboard
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-4">
           <Button

@@ -90,7 +90,8 @@ export const Comments = ({ postId }: CommentsProps) => {
       return;
     }
 
-    const { error } = await supabase.from("comments").insert([
+    // Start a transaction to insert comment and update post status
+    const { error: commentError } = await supabase.from("comments").insert([
       {
         content: newComment,
         post_id: postId,
@@ -99,13 +100,27 @@ export const Comments = ({ postId }: CommentsProps) => {
       },
     ]);
 
-    if (error) {
+    if (commentError) {
       toast({
         variant: "destructive",
         title: "Error posting comment",
-        description: error.message,
+        description: commentError.message,
       });
       return;
+    }
+
+    // Update the post to mark it as having responses
+    const { error: postUpdateError } = await supabase
+      .from("posts")
+      .update({ 
+        has_responses: true,
+        last_activity_at: new Date().toISOString()
+      })
+      .eq("id", postId);
+
+    if (postUpdateError) {
+      console.error("Error updating post response status:", postUpdateError);
+      // Continue even if this fails, as the comment was successfully added
     }
 
     setNewComment("");

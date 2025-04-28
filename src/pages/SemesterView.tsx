@@ -10,10 +10,11 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import { PlusCircle, BookOpen, Filter } from "lucide-react";
+import { PlusCircle, BookOpen, Filter, BookOpen as BookIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { subjectsData, getSubjectsForBranchAndSemester } from "@/lib/subjectsData";
 
 // Define available courses and semesters
 const COURSES = ["All Courses", "CSE", "IT", "BIOTECH", "ECE", "BBA"];
@@ -43,13 +44,41 @@ export default function SemesterView() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState<string>(searchParams.get("course") || "All Courses");
   const [selectedSemester, setSelectedSemester] = useState<string>(searchParams.get("semester") || "All Semesters");
+  const [selectedSubject, setSelectedSubject] = useState<string>(searchParams.get("subject") || "All Subjects");
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
 
   useEffect(() => {
+    // Check if user is authorized to view this page
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+
+    // Update available subjects when course or semester changes
+    if (selectedCourse !== "All Courses" && selectedSemester !== "All Semesters") {
+      const subjects = getSubjectsForBranchAndSemester(selectedCourse, selectedSemester);
+      setAvailableSubjects(["All Subjects", ...subjects]);
+      
+      // Reset subject selection if the current selection is not available
+      if (selectedSubject !== "All Subjects" && !subjects.includes(selectedSubject)) {
+        setSelectedSubject("All Subjects");
+        searchParams.set("subject", "All Subjects");
+        setSearchParams(searchParams);
+      }
+    } else {
+      setAvailableSubjects(["All Subjects"]);
+      if (selectedSubject !== "All Subjects") {
+        setSelectedSubject("All Subjects");
+        searchParams.set("subject", "All Subjects");
+        setSearchParams(searchParams);
+      }
+    }
+    
     fetchPosts();
-  }, [selectedCourse, selectedSemester]);
+  }, [selectedCourse, selectedSemester, selectedSubject, user, navigate]);
 
   const fetchPosts = async () => {
     setIsLoading(true);
@@ -142,6 +171,12 @@ export default function SemesterView() {
           post.tags.includes(selectedSemester)
         );
       }
+      
+      if (selectedSubject !== "All Subjects") {
+        filteredPosts = filteredPosts.filter(post => 
+          post.tags.includes(selectedSubject)
+        );
+      }
 
       setPosts(filteredPosts);
     } catch (error) {
@@ -165,6 +200,12 @@ export default function SemesterView() {
   const handleSemesterChange = (value: string) => {
     setSelectedSemester(value);
     searchParams.set("semester", value);
+    setSearchParams(searchParams);
+  };
+  
+  const handleSubjectChange = (value: string) => {
+    setSelectedSubject(value);
+    searchParams.set("subject", value);
     setSearchParams(searchParams);
   };
 
@@ -203,13 +244,25 @@ export default function SemesterView() {
     <div className="container py-8">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Posts by Semester</h1>
-        <Button 
-          onClick={() => navigate('/home?create=true')} 
-          className="flex items-center gap-2"
-        >
-          <PlusCircle className="h-4 w-4" />
-          Create Post
-        </Button>
+        <div className="flex gap-2">
+          {user?.role === 'teacher' && (
+            <Button 
+              variant="outline"
+              onClick={() => navigate('/teacher')} 
+              className="flex items-center gap-2"
+            >
+              <Filter className="h-4 w-4" />
+              Back to Dashboard
+            </Button>
+          )}
+          <Button 
+            onClick={() => navigate('/home?create=true')} 
+            className="flex items-center gap-2"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Create Post
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-4 mb-8">
@@ -239,6 +292,26 @@ export default function SemesterView() {
               {SEMESTERS.map(semester => (
                 <SelectItem key={semester} value={semester}>
                   {semester}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex-1">
+          <label className="text-sm font-medium mb-2 block">Subject</label>
+          <Select 
+            value={selectedSubject} 
+            onValueChange={handleSubjectChange} 
+            disabled={availableSubjects.length <= 1}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Select subject" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSubjects.map(subject => (
+                <SelectItem key={subject} value={subject}>
+                  {subject}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -293,8 +366,10 @@ export default function SemesterView() {
                     onClick={() => {
                       setSelectedCourse("All Courses");
                       setSelectedSemester("All Semesters");
+                      setSelectedSubject("All Subjects");
                       searchParams.delete("course");
                       searchParams.delete("semester");
+                      searchParams.delete("subject");
                       setSearchParams(searchParams);
                     }}
                   >
@@ -331,8 +406,10 @@ export default function SemesterView() {
                     onClick={() => {
                       setSelectedCourse("All Courses");
                       setSelectedSemester("All Semesters");
+                      setSelectedSubject("All Subjects");
                       searchParams.delete("course");
                       searchParams.delete("semester");
+                      searchParams.delete("subject");
                       setSearchParams(searchParams);
                     }}
                   >

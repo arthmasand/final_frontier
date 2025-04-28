@@ -160,7 +160,7 @@ const AppContent = () => {
                 <Route
                   path="/semester-view"
                   element={
-                    <ProtectedRoute requiredRole="student">
+                    <ProtectedRoute>
                       <SemesterView />
                     </ProtectedRoute>
                   }

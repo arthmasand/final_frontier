@@ -118,8 +118,35 @@ const Home = () => {
       'BBA'
     ];
     
+    // Subject tags
+    const subjectTags = [
+      // CSE & IT Subjects
+      'C Programming', 'Physics-1', 'Physics-2', 'OOPS',
+      'Electrical Science', 'DBMS', 'Digital Systems', 'EVS',
+      'Operating System', 'COA', 'Blockchain', 'Computer Networks',
+      'Graph Theory', 'Political Philosophy', 'Astrophysics', 'Agile Methodology',
+      
+      // BIOTECH Subjects
+      'Biology Fundamentals', 'Chemistry-1', 'Chemistry-2', 'Cell Biology',
+      'Biochemistry', 'Microbiology', 'Genetics', 'Molecular Biology',
+      'Immunology', 'Bioprocess Engineering', 'Bioinformatics', 'Genomics',
+      'Tissue Engineering', 'Bioethics', 'Pharmaceutical Biotechnology', 'Biosafety',
+      
+      // ECE Subjects
+      'Basic Electronics', 'Circuit Theory', 'Analog Electronics', 'Digital Electronics',
+      'Microprocessors', 'Signals and Systems', 'Communication Systems', 'Control Systems',
+      'VLSI Design', 'Embedded Systems', 'Wireless Communication', 'Antenna Theory',
+      'IoT Systems', 'Robotics',
+      
+      // BBA Subjects
+      'Principles of Management', 'Business Economics', 'Financial Accounting', 'Business Communication',
+      'Marketing Management', 'Organizational Behavior', 'Business Law', 'Human Resource Management',
+      'Operations Management', 'Financial Management', 'Strategic Management', 'International Business',
+      'Entrepreneurship', 'Business Ethics', 'Project Management', 'Digital Marketing'
+    ];
+    
     // Combine all tags
-    const allTags = [...defaultTags, ...semesterTags, ...courseTags];
+    const allTags = [...defaultTags, ...semesterTags, ...courseTags, ...subjectTags];
 
     try {
       // First check if we have any tags
