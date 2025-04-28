@@ -42,31 +42,56 @@ export default function AuthCallback() {
           if (semester) localStorage.removeItem('pendingSemester');
         }
         
+        // For admin role, we don't need course and semester
+        if (role === 'admin') {
+          console.log('Admin role detected, skipping course and semester');
+        }
+        
         // Create/update profile with course and semester
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .upsert({
+        try {
+          // Create base profile data
+          const profileData: {
+            id: string;
+            username: string;
+            role: string;
+            course?: string | null;
+            semester?: string | null;
+          } = {
             id: session.user.id,
             username: session.user.email?.split('@')[0] || 'user',
-            role: role,
-            course: course,
-            semester: semester
-          });
-
-        if (profileError) {
-          console.error('Profile error:', profileError);
+            role: role
+          };
+          
+          // Only add course and semester for students
+          if (role === 'student') {
+            profileData.course = course;
+            profileData.semester = semester;
+          }
+          
+          console.log('Creating/updating profile with data:', profileData);
+          
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert(profileData);
+  
+          if (profileError) {
+            console.error('Error creating/updating profile:', profileError);
+            navigate('/login');
+            return;
+          }
+        } catch (error) {
+          console.error('Exception during profile creation:', error);
           navigate('/login');
           return;
         }
 
-        // Redirect
+        // Redirect based on role
         if (role === 'teacher') {
           navigate('/teacher');
-        } else if (role === 'student') {
-          navigate('/student');
+        } else if (role === 'admin') {
+          navigate('/admin');
         } else {
-          console.error('Invalid role:', role);
-          navigate('/login');
+          navigate('/student');
         }
       } catch (error) {
         console.error("Error in auth callback:", error);

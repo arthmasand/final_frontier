@@ -22,13 +22,14 @@ import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import SemesterView from "./pages/SemesterView";
 import UpdateStudentProfile from "./pages/UpdateStudentProfile";
+import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: "teacher" | "student";
+  requiredRole?: "teacher" | "student" | "admin";
 }
 
 function ProtectedRoute({ children, requiredRole }: ProtectedRouteProps) {
@@ -171,6 +172,14 @@ const AppContent = () => {
                   element={
                     <ProtectedRoute requiredRole="student">
                       <UpdateStudentProfile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute requiredRole="admin">
+                      <AdminDashboard />
                     </ProtectedRoute>
                   }
                 />

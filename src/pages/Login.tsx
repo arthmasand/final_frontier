@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Mail, GraduationCap, School } from "lucide-react";
+import { Mail, GraduationCap, School, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
@@ -13,7 +13,7 @@ import { supabase } from "@/lib/supabase";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
-  role: z.enum(["student", "teacher"]),
+  role: z.enum(["student", "teacher", "admin"]),
   course: z.string().optional(),
   semester: z.string().optional(),
 });
@@ -23,7 +23,7 @@ const Login = () => {
   const navigate = useNavigate();
   const { signInWithEmail } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedRole, setSelectedRole] = useState<"student" | "teacher" | null>(null);
+  const [selectedRole, setSelectedRole] = useState<"student" | "teacher" | "admin" | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -207,28 +207,42 @@ const Login = () => {
               </form>
             </Form>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4 mb-6">
               <Button
-                variant="outline"
-                className="w-full h-12 text-base flex items-center justify-center gap-2"
+                type="button"
+                variant={selectedRole === "student" ? "default" : "outline"}
+                className="flex-1 flex items-center justify-center gap-2 py-6"
                 onClick={() => {
                   setSelectedRole("student");
                   form.setValue("role", "student");
                 }}
               >
                 <GraduationCap className="h-5 w-5" />
-                Login as Student
+                Student
               </Button>
               <Button
-                variant="outline"
-                className="w-full h-12 text-base flex items-center justify-center gap-2"
+                type="button"
+                variant={selectedRole === "teacher" ? "default" : "outline"}
+                className="flex-1 flex items-center justify-center gap-2 py-6"
                 onClick={() => {
                   setSelectedRole("teacher");
                   form.setValue("role", "teacher");
                 }}
               >
                 <School className="h-5 w-5" />
-                Login as Teacher
+                Teacher
+              </Button>
+              <Button
+                type="button"
+                variant={selectedRole === "admin" ? "default" : "outline"}
+                className="flex-1 flex items-center justify-center gap-2 py-6"
+                onClick={() => {
+                  setSelectedRole("admin");
+                  form.setValue("role", "admin");
+                }}
+              >
+                <ShieldCheck className="h-5 w-5" />
+                Admin
               </Button>
             </div>
           )}

@@ -148,7 +148,7 @@ export type Database = {
           id: string
           nickname: string | null
           nickname_changed: boolean | null
-          role: 'student' | 'teacher'
+          role: 'student' | 'teacher' | 'admin'
           updated_at: string
           username: string | null
           course: string | null
@@ -165,7 +165,7 @@ export type Database = {
           username?: string | null
           course?: string | null
           semester?: string | null
-          role?: 'student' | 'teacher'
+          role?: 'student' | 'teacher' | 'admin'
         }
         Update: {
           avatar_url?: string | null
@@ -178,9 +178,59 @@ export type Database = {
           username?: string | null
           course?: string | null
           semester?: string | null
-          role?: 'student' | 'teacher'
+          role?: 'student' | 'teacher' | 'admin'
         }
         Relationships: []
+      }
+      courses: {
+        Row: {
+          id: string
+          name: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
+      subjects: {
+        Row: {
+          id: string
+          name: string
+          course_id: string
+          semester: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          course_id: string
+          semester: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          course_id?: string
+          semester?: number
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       tags: {
         Row: {

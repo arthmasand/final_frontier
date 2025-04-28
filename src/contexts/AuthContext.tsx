@@ -9,9 +9,10 @@ type Profile = Tables<"profiles">;
 interface AuthContextType {
   user: User | null;
   profile: Profile | null;
-  signInWithEmail: (email: string, role: "student" | "teacher") => Promise<void>;
+  signInWithEmail: (email: string, role: "student" | "teacher" | "admin") => Promise<void>;
   signOut: () => Promise<void>;
   isTeacher: boolean;
+  isAdmin: boolean;
   isModerator: boolean;
   moderatorTimeSlot: string | null;
 }
@@ -187,23 +188,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const signInWithEmail = async (email: string, role: "student" | "teacher") => {
+  const signInWithEmail = async (email: string, role: "student" | "teacher" | "admin") => {
     try {
-      // First check if user exists and get their current role
-      const { data: existingUser } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("email", email)
-        .single();
-
-      // Use existing role if available, otherwise use provided role
-      const finalRole = existingUser?.role || role;
-
+      console.log(`Signing in with email: ${email}, role: ${role}`);
+      
+      // We can't check for existing users by email directly since profiles are linked by user ID
+      // Instead, we'll just use the provided role and let the auth callback handle existing users
+      
       // Send magic link
       const { error: signInError } = await supabase.auth.signInWithOtp({
         email,
         options: {
-          data: { role: finalRole }, // Store role in user metadata
+          data: { role: role }, // Store role in user metadata
           emailRedirectTo: `${window.location.origin}/auth/callback` // Redirect to correct dashboard
         }
       });
@@ -227,6 +223,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signInWithEmail,
     signOut,
     isTeacher: profile?.role === "teacher",
+    isAdmin: profile?.role === "admin",
     isModerator: moderatorTimeSlot !== null,
     moderatorTimeSlot,
   };

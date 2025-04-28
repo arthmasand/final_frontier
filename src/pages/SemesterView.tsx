@@ -14,7 +14,7 @@ import { PlusCircle, BookOpen, Filter, BookOpen as BookIcon } from "lucide-react
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { subjectsData, getSubjectsForBranchAndSemester } from "@/lib/subjectsData";
+// import { subjectsData, getSubjectsForBranchAndSemester } from "@/lib/subjectsData";
 
 // Define available courses and semesters
 const COURSES = ["All Courses", "CSE", "IT", "BIOTECH", "ECE", "BBA"];
@@ -57,13 +57,51 @@ export default function SemesterView() {
       return;
     }
 
+    // Get subjects for the selected branch and semester from the database
+    const fetchSubjects = async () => {
+      if (selectedCourse !== "All Courses" && selectedSemester !== "All Semesters") {
+        try {
+          // Extract semester number from string like "Semester 3"
+          const semesterNumber = parseInt(selectedSemester.split(' ')[1]);
+          
+          // First get the course ID
+          const { data: courseData, error: courseError } = await supabase
+            .from('courses')
+            .select('id')
+            .eq('name', selectedCourse)
+            .single();
+          
+          if (courseError) throw courseError;
+          
+          // Then fetch subjects using the course ID
+          const { data: subjects, error } = await supabase
+            .from('subjects')
+            .select('name')
+            .eq('semester', semesterNumber)
+            .eq('course_id', courseData.id);
+          
+          if (error) throw error;
+          
+          // Extract subject names and add "All Subjects" option
+          const subjectNames = subjects?.map(s => s.name) || [];
+          setAvailableSubjects(["All Subjects", ...subjectNames]);
+        } catch (error) {
+          console.error('Error fetching subjects:', error);
+          setAvailableSubjects(["All Subjects"]);
+        }
+      } else {
+        setAvailableSubjects(["All Subjects"]);
+      }
+    };
+    
+    fetchSubjects();
+  }, [selectedCourse, selectedSemester]);
+
+  useEffect(() => {
     // Update available subjects when course or semester changes
     if (selectedCourse !== "All Courses" && selectedSemester !== "All Semesters") {
-      const subjects = getSubjectsForBranchAndSemester(selectedCourse, selectedSemester);
-      setAvailableSubjects(["All Subjects", ...subjects]);
-      
       // Reset subject selection if the current selection is not available
-      if (selectedSubject !== "All Subjects" && !subjects.includes(selectedSubject)) {
+      if (selectedSubject !== "All Subjects" && !availableSubjects.includes(selectedSubject)) {
         setSelectedSubject("All Subjects");
         searchParams.set("subject", "All Subjects");
         setSearchParams(searchParams);
