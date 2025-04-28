@@ -107,11 +107,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // Create minimal profile with only required fields
+      // Get course and semester from localStorage if available (for students)
+      let course = null;
+      let semester = null;
+      
+      if (role === 'student') {
+        course = localStorage.getItem('pendingCourse');
+        semester = localStorage.getItem('pendingSemester');
+        
+        // Clear the localStorage after retrieving the values
+        if (course) localStorage.removeItem('pendingCourse');
+        if (semester) localStorage.removeItem('pendingSemester');
+      }
+      
+      // Create profile with all available fields
       const profileData = {
         id: userId,
         username: session.user.email?.split('@')[0] || 'user',
-        role: role
+        role: role,
+        course: course,
+        semester: semester
       };
 
       console.log('Creating new profile:', profileData);

@@ -35,6 +35,8 @@ interface Student {
   id: string;
   username: string;
   role: string;
+  course?: string;
+  semester?: string;
   moderator_assignments?: {
     id: string;
     student_id: string;
@@ -73,10 +75,10 @@ export default function TeacherDashboard() {
 
   const fetchStudents = async () => {
     try {
-      // First get all students
+      // First get all students with their course and semester information
       const { data: students, error: studentsError } = await supabase
         .from('profiles')
-        .select('id, username, role')
+        .select('id, username, role, course, semester')
         .eq('role', 'student')
         .order('username');
 
@@ -168,6 +170,8 @@ export default function TeacherDashboard() {
           <TableHeader>
             <TableRow>
               <TableHead>Username</TableHead>
+              <TableHead>Course</TableHead>
+              <TableHead>Semester</TableHead>
               <TableHead>Current Assignment</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -176,6 +180,8 @@ export default function TeacherDashboard() {
             {students.map((student) => (
               <TableRow key={student.id}>
                 <TableCell className="font-medium">{student.username}</TableCell>
+                <TableCell>{student.course || 'Not specified'}</TableCell>
+                <TableCell>{student.semester || 'Not specified'}</TableCell>
                 <TableCell>
                   {student.moderator_assignments && student.moderator_assignments.length > 0 
                     ? student.moderator_assignments[0].time_slot 
@@ -199,6 +205,12 @@ export default function TeacherDashboard() {
                         <DialogTitle>Assign Moderator Time Slot</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
+                        <div className="mb-4">
+                          <p className="text-sm font-medium mb-1">Student Information</p>
+                          <p><strong>Username:</strong> {selectedStudent?.username}</p>
+                          <p><strong>Course:</strong> {selectedStudent?.course || 'Not specified'}</p>
+                          <p><strong>Semester:</strong> {selectedStudent?.semester || 'Not specified'}</p>
+                        </div>
                         <div className="space-y-2">
                           <p className="text-sm font-medium">Select Time Slot</p>
                           <Select

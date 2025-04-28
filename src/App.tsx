@@ -21,6 +21,7 @@ import Events from "./pages/Events";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import StudentDashboard from "./pages/StudentDashboard";
 import SemesterView from "./pages/SemesterView";
+import UpdateStudentProfile from "./pages/UpdateStudentProfile";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 const queryClient = new QueryClient();
@@ -162,6 +163,14 @@ const AppContent = () => {
                   element={
                     <ProtectedRoute>
                       <SemesterView />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/update-profile"
+                  element={
+                    <ProtectedRoute requiredRole="student">
+                      <UpdateStudentProfile />
                     </ProtectedRoute>
                   }
                 />

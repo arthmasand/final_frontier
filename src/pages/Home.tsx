@@ -428,6 +428,20 @@ const Home = () => {
       navigate("/login");
       return;
     }
+    
+    // Get user profile to fetch course and semester information
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('course, semester, role')
+      .eq('id', session.session.user.id)
+      .single();
+      
+    console.log('User profile for tag addition:', userProfile);
+      
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+      // Continue without course/semester tags if profile fetch fails
+    }
 
     if (isUploading) {
       toast({
@@ -461,15 +475,90 @@ const Home = () => {
       return;
     }
 
+    // Prepare tags - combine user selected tags with auto-tags from profile
+    let allTags = [...newPost.tags];
+    console.log('Initial tags selected by user:', allTags);
+    
+    // For students, automatically add course and semester tags if available
+    // Note: We don't strictly check role since we want this to work for all users
+    if (userProfile) {
+      // Ensure course and semester tags exist in the database
+      if (userProfile.course) {
+        // Check if course tag exists
+        let courseTag = availableTags.find(t => t.name === userProfile.course);
+        
+        if (!courseTag) {
+          // Create the course tag if it doesn't exist
+          console.log('Course tag not found, creating it:', userProfile.course);
+          const { data: newCourseTag, error: courseTagError } = await supabase
+            .from('tags')
+            .insert({ name: userProfile.course })
+            .select()
+            .single();
+            
+          if (courseTagError) {
+            console.error('Error creating course tag:', courseTagError);
+          } else {
+            console.log('Created new course tag:', newCourseTag);
+            setAvailableTags(prevTags => [...prevTags, newCourseTag]);
+            courseTag = newCourseTag;
+          }
+        }
+        
+        // Add course tag if it's not already included
+        if (courseTag && !allTags.includes(userProfile.course)) {
+          console.log('Adding course tag:', userProfile.course);
+          allTags.push(userProfile.course);
+        }
+      }
+      
+      // Do the same for semester tag
+      if (userProfile.semester) {
+        // Check if semester tag exists
+        let semesterTag = availableTags.find(t => t.name === userProfile.semester);
+        
+        if (!semesterTag) {
+          // Create the semester tag if it doesn't exist
+          console.log('Semester tag not found, creating it:', userProfile.semester);
+          const { data: newSemesterTag, error: semesterTagError } = await supabase
+            .from('tags')
+            .insert({ name: userProfile.semester })
+            .select()
+            .single();
+            
+          if (semesterTagError) {
+            console.error('Error creating semester tag:', semesterTagError);
+          } else {
+            console.log('Created new semester tag:', newSemesterTag);
+            setAvailableTags(prevTags => [...prevTags, newSemesterTag]);
+            semesterTag = newSemesterTag;
+          }
+        }
+        
+        // Add semester tag if it's not already included
+        if (semesterTag && !allTags.includes(userProfile.semester)) {
+          console.log('Adding semester tag:', userProfile.semester);
+          allTags.push(userProfile.semester);
+        }
+      }
+    }
+    
+    console.log('Final tags after auto-addition:', allTags);
+    
     // Insert post tags
-    if (newPost.tags.length > 0 && post) {
-      const validTags = newPost.tags.map(tagName => {
+    if (allTags.length > 0 && post) {
+      console.log('Available tags to choose from:', availableTags.map(t => t.name));
+      
+      const validTags = allTags.map(tagName => {
         const tag = availableTags.find(t => t.name === tagName);
+        console.log(`Looking for tag "${tagName}":`, tag ? 'Found' : 'Not found');
         return tag ? {
           post_id: post.id,
           tag_id: tag.id
         } : null;
       }).filter((tag): tag is { post_id: string; tag_id: string } => tag !== null);
+      
+      console.log('Valid tags to insert:', validTags.length);
 
       if (validTags.length > 0) {
         const { error: tagError } = await supabase.from("posts_tags").insert(validTags);

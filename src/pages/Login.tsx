@@ -14,6 +14,8 @@ import { supabase } from "@/lib/supabase";
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
   role: z.enum(["student", "teacher"]),
+  course: z.string().optional(),
+  semester: z.string().optional(),
 });
 
 const Login = () => {
@@ -28,6 +30,8 @@ const Login = () => {
     defaultValues: {
       email: "",
       role: "student",
+      course: "",
+      semester: "",
     },
   });
 
@@ -37,12 +41,18 @@ const Login = () => {
       // First check if user already exists
       const { data: existingProfile } = await supabase
         .from("profiles")
-        .select("role")
+        .select("role, course, semester")
         .eq("email", values.email)
         .single();
 
-      // If user exists, use their existing role
+      // If user exists, use their existing role and academic info
       const roleToUse = existingProfile?.role || values.role;
+      
+      // Store course and semester in localStorage for new student profiles
+      if (values.role === "student" && !existingProfile) {
+        if (values.course) localStorage.setItem("pendingCourse", values.course);
+        if (values.semester) localStorage.setItem("pendingSemester", values.semester);
+      }
 
       await signInWithEmail(values.email, roleToUse);
       toast({
@@ -120,6 +130,62 @@ const Login = () => {
                   )}
                 />
                 <input type="hidden" {...form.register("role")} value={selectedRole} />
+                
+                {selectedRole === "student" && (
+                  <div className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="course"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <select 
+                              className="w-full p-2 border rounded-md"
+                              {...field}
+                              disabled={isLoading}
+                            >
+                              <option value="">Select your course</option>
+                              <option value="CSE">Computer Science (CSE)</option>
+                              <option value="IT">Information Technology (IT)</option>
+                              <option value="ECE">Electronics & Communication (ECE)</option>
+                              <option value="BIOTECH">Biotechnology</option>
+                              <option value="BBA">Business Administration (BBA)</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="semester"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <select 
+                              className="w-full p-2 border rounded-md"
+                              {...field}
+                              disabled={isLoading}
+                            >
+                              <option value="">Select your semester</option>
+                              <option value="Semester 1">Semester 1</option>
+                              <option value="Semester 2">Semester 2</option>
+                              <option value="Semester 3">Semester 3</option>
+                              <option value="Semester 4">Semester 4</option>
+                              <option value="Semester 5">Semester 5</option>
+                              <option value="Semester 6">Semester 6</option>
+                              <option value="Semester 7">Semester 7</option>
+                              <option value="Semester 8">Semester 8</option>
+                            </select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+                
                 <div className="flex gap-4">
                   <Button
                     type="button"

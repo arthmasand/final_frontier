@@ -28,13 +28,29 @@ export default function AuthCallback() {
           return;
         }
 
-        // Create/update profile
+        // Get course and semester from localStorage if available (for students)
+        let course = null;
+        let semester = null;
+        
+        if (role === 'student') {
+          course = localStorage.getItem('pendingCourse');
+          semester = localStorage.getItem('pendingSemester');
+          console.log('Retrieved from localStorage:', { course, semester });
+          
+          // Clear the localStorage after retrieving the values
+          if (course) localStorage.removeItem('pendingCourse');
+          if (semester) localStorage.removeItem('pendingSemester');
+        }
+        
+        // Create/update profile with course and semester
         const { error: profileError } = await supabase
           .from('profiles')
           .upsert({
             id: session.user.id,
             username: session.user.email?.split('@')[0] || 'user',
-            role: role
+            role: role,
+            course: course,
+            semester: semester
           });
 
         if (profileError) {

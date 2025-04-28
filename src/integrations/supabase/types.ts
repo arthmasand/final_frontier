@@ -151,6 +151,8 @@ export type Database = {
           role: 'student' | 'teacher'
           updated_at: string
           username: string | null
+          course: string | null
+          semester: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -161,6 +163,9 @@ export type Database = {
           nickname_changed?: boolean | null
           updated_at?: string
           username?: string | null
+          course?: string | null
+          semester?: string | null
+          role?: 'student' | 'teacher'
         }
         Update: {
           avatar_url?: string | null
@@ -171,6 +176,9 @@ export type Database = {
           nickname_changed?: boolean | null
           updated_at?: string
           username?: string | null
+          course?: string | null
+          semester?: string | null
+          role?: 'student' | 'teacher'
         }
         Relationships: []
       }

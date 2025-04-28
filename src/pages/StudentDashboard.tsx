@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Clock, BookOpen, MessageSquare, BarChart3, PlusCircle, GraduationCap } from "lucide-react";
+import { Clock, BookOpen, MessageSquare, BarChart3, PlusCircle, GraduationCap, UserCog } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -226,6 +226,15 @@ export default function StudentDashboard() {
               >
                 <PlusCircle className="h-8 w-8 text-primary" />
                 <span>Create New Post</span>
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="h-24 flex flex-col items-center justify-center gap-2"
+                onClick={() => navigate('/update-profile')}
+              >
+                <UserCog className="h-8 w-8 text-primary" />
+                <span>Update Academic Info</span>
               </Button>
             </div>
           </CardContent>
