@@ -16,8 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 // import { subjectsData, getSubjectsForBranchAndSemester } from "@/lib/subjectsData";
 
-// Define available courses and semesters
-const COURSES = ["All Courses", "CSE", "IT", "BIOTECH", "ECE", "BBA"];
+// Define available semesters
 const SEMESTERS = ["All Semesters", "Semester 1", "Semester 2", "Semester 3", "Semester 4", "Semester 5", "Semester 6", "Semester 7", "Semester 8", "Miscellaneous"];
 
 type Profile = {
@@ -42,6 +41,7 @@ export default function SemesterView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [availableCourses, setAvailableCourses] = useState<string[]>(["All Courses"]);
   const [selectedCourse, setSelectedCourse] = useState<string>(searchParams.get("course") || "All Courses");
   const [selectedSemester, setSelectedSemester] = useState<string>(searchParams.get("semester") || "All Semesters");
   const [selectedSubject, setSelectedSubject] = useState<string>(searchParams.get("subject") || "All Subjects");
@@ -51,9 +51,34 @@ export default function SemesterView() {
   const { user } = useAuth();
 
   useEffect(() => {
-    // Check if user is authorized to view this page
+    const fetchCourses = async () => {
+      try {
+        const { data: courses, error } = await supabase
+          .from('courses')
+          .select('name')
+          .order('name');
+        
+        if (error) throw error;
+        
+        // Add "All Courses" option at the beginning
+        const courseNames = ["All Courses", ...(courses?.map(c => c.name) || [])];
+        setAvailableCourses(courseNames);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to load courses. Please try again.'
+        });
+      }
+    };
+    
+    fetchCourses();
+  }, [toast]);
+
+  useEffect(() => {
     if (!user) {
-      navigate('/login');
+      navigate("/login");
       return;
     }
 
@@ -307,11 +332,11 @@ export default function SemesterView() {
         <div className="flex-1">
           <label className="text-sm font-medium mb-2 block">Course</label>
           <Select value={selectedCourse} onValueChange={handleCourseChange}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select course" />
+            <SelectTrigger>
+              <SelectValue placeholder="Select Course" />
             </SelectTrigger>
             <SelectContent>
-              {COURSES.map(course => (
+              {availableCourses.map((course) => (
                 <SelectItem key={course} value={course}>
                   {course}
                 </SelectItem>
