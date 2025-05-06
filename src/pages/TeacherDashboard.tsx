@@ -144,6 +144,38 @@ export default function TeacherDashboard() {
     }
   };
 
+  const handleUnassignModerator = async (student: Student) => {
+    if (!student.moderator_assignments || student.moderator_assignments.length === 0) return;
+    
+    setIsLoading(true);
+    try {
+      // Delete the assignment
+      const { error } = await supabase
+        .from("moderator_assignments")
+        .delete()
+        .eq('student_id', student.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Moderator unassigned successfully",
+      });
+
+      // Refresh the students list
+      await fetchStudents();
+    } catch (error) {
+      console.error("Error unassigning moderator:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to unassign moderator",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="container py-8">
       <div className="flex justify-between items-center mb-8">
@@ -188,57 +220,64 @@ export default function TeacherDashboard() {
                     : "Not assigned"}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant={student.moderator_assignments && student.moderator_assignments.length > 0 ? "secondary" : "outline"}
-                        onClick={() => setSelectedStudent(student)}
-                        disabled={student.moderator_assignments && student.moderator_assignments.length > 0}
-                      >
-                        {student.moderator_assignments && student.moderator_assignments.length > 0 
-                          ? "Assigned" 
-                          : "Assign as Moderator"}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Assign Moderator Time Slot</DialogTitle>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="mb-4">
-                          <p className="text-sm font-medium mb-1">Student Information</p>
-                          <p><strong>Username:</strong> {selectedStudent?.username}</p>
-                          <p><strong>Course:</strong> {selectedStudent?.course || 'Not specified'}</p>
-                          <p><strong>Semester:</strong> {selectedStudent?.semester || 'Not specified'}</p>
-                        </div>
-                        <div className="space-y-2">
-                          <p className="text-sm font-medium">Select Time Slot</p>
-                          <Select
-                            value={selectedTimeSlot}
-                            onValueChange={setSelectedTimeSlot}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select a time slot" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {TIME_SLOTS.map((slot) => (
-                                <SelectItem key={slot} value={slot}>
-                                  {slot}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                  {student.moderator_assignments && student.moderator_assignments.length > 0 ? (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleUnassignModerator(student)}
+                      disabled={isLoading}
+                    >
+                      Unassign
+                    </Button>
+                  ) : (
+                    <Dialog>
+                      <DialogTrigger asChild>
                         <Button
-                          className="w-full"
-                          onClick={handleAssignModerator}
-                          disabled={!selectedTimeSlot || isLoading}
+                          variant="outline"
+                          onClick={() => setSelectedStudent(student)}
                         >
-                          {isLoading ? "Assigning..." : "Assign"}
+                          Assign as Moderator
                         </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Assign Moderator Time Slot</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="mb-4">
+                            <p className="text-sm font-medium mb-1">Student Information</p>
+                            <p><strong>Username:</strong> {selectedStudent?.username}</p>
+                            <p><strong>Course:</strong> {selectedStudent?.course || 'Not specified'}</p>
+                            <p><strong>Semester:</strong> {selectedStudent?.semester || 'Not specified'}</p>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium">Select Time Slot</p>
+                            <Select
+                              value={selectedTimeSlot}
+                              onValueChange={setSelectedTimeSlot}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a time slot" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {TIME_SLOTS.map((slot) => (
+                                  <SelectItem key={slot} value={slot}>
+                                    {slot}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            className="w-full"
+                            onClick={handleAssignModerator}
+                            disabled={!selectedTimeSlot || isLoading}
+                          >
+                            {isLoading ? "Assigning..." : "Assign"}
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                  )}
                 </TableCell>
               </TableRow>
             ))}

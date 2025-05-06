@@ -276,32 +276,32 @@ const Landing = () => {
   
   const testimonials = [
     {
-      quote: "This platform has completely transformed how I collaborate with classmates on assignments and projects.",
+      quote: "This platform helped me connect with classmates and get answers to my questions quickly.",
       author: "Priya Sharma",
-      role: "Computer Science, Semester 5",
+      role: "Computer Science Student",
       image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330"
     },
     {
-      quote: "As a professor, I can now track unanswered questions and ensure no student query goes unaddressed.",
+      quote: "As a professor, I can easily share resources and engage with students outside of class hours.",
       author: "Dr. Rajesh Kumar",
-      role: "Associate Professor, IT Department",
+      role: "Associate Professor",
       image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e"
     },
     {
-      quote: "The semester view makes it so easy to find relevant discussions for my courses.",
+      quote: "The semester view feature makes it easy to find relevant discussions for my current courses.",
       author: "Amit Patel",
-      role: "Biotechnology, Semester 3",
+      role: "Engineering Student",
       image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d"
     }
   ];
   
   const stats = [
-    { value: "10,000+", label: "Active Users" },
-    { value: "25,000+", label: "Academic Discussions" },
-    { value: "95%", label: "Query Resolution Rate" },
-    { value: "15+", label: "Academic Departments" }
+    { value: "24/7", label: "Academic Support" },
+    { value: "Real-time", label: "Collaboration" },
+    { value: "Secure", label: "Data Privacy" },
+    { value: "Inclusive", label: "Learning Environment" }
   ];
-
+  
   if (isLoading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
@@ -395,14 +395,17 @@ onClick={() => {
 
         {/* Features Section */}
         <section id="features-section" className="mb-24">
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             <Badge variant="outline" className="mb-4">
               Features
             </Badge>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">
-              Our platform offers a comprehensive set of tools designed specifically for academic collaboration
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything You Need for Academic Success</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
+              Our platform offers a comprehensive set of tools designed specifically for academic collaboration and knowledge sharing
             </p>
+            <div className="flex justify-center mb-6">
+              <div className="w-24 h-1 bg-primary/30 rounded-full"></div>
+            </div>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
